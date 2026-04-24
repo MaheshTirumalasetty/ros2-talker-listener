@@ -8,14 +8,15 @@ on:
 
 env:
   ROS_DISTRO: humble
+  IMAGE_NAME: ros2-talker-listener
 
 jobs:
+  # Job 1 — Build and Test (x86)
   build-and-test:
     runs-on: ubuntu-22.04
-
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup ROS 2 Humble
       uses: ros-tooling/setup-ros@v0.7
@@ -53,3 +54,45 @@ jobs:
         colcon test \
           --event-handlers console_direct+
         colcon test-result --verbose
+
+  # Job 2 — Multi-Architecture Docker Build
+  docker-build:
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image for x86_64
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64
+        push: false
+        tags: ${{ env.IMAGE_NAME }}:amd64-latest
+        cache-from: type=gflags
+        cache-to: type=inline
+
+    - name: Build Docker image for ARM64
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/arm64
+        push: false
+        tags: ${{ env.IMAGE_NAME }}:arm64-latest
+
+    - name: Build Multi-Platform Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: false
+        tags: |
+          ${{ env.IMAGE_NAME }}:latest
+          ${{ env.IMAGE_NAME }}:humble
