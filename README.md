@@ -75,23 +75,23 @@ This is the same challenge faced when building NVIDIA Isaac ROS packages that ne
 
 ## Project Structure
 
+```
 ros2-talker-listener/
-talker_listener/
-talker_node.py      ← Publisher node
-listener_node.py    ← Subscriber node
-init.py
-resource/
-talker_listener
-.github/
-workflows/
-ros2_ci.yml     ← CI/CD pipeline definition
-Dockerfile              ← Multi-stage Docker build
-package.xml             ← ROS 2 package dependencies
-setup.py                ← Python package configuration
-setup.cfg               ← Build configuration
-README.md               ← This file
-
----
+    talker_listener/
+        talker_node.py      ← Publisher node
+        listener_node.py    ← Subscriber node
+        __init__.py
+    resource/
+        talker_listener     ← Package marker
+    .github/
+        workflows/
+            ros2_ci.yml     ← CI/CD pipeline definition
+    Dockerfile              ← Multi-stage Docker build
+    package.xml             ← ROS 2 package dependencies
+    setup.py                ← Python package configuration
+    setup.cfg               ← Build configuration
+    README.md               ← This file
+```
 
 ## Key Technologies Used
 
@@ -110,14 +110,22 @@ README.md               ← This file
 
 The Dockerfile uses three stages:
 
+```
 Stage 1 — Base
-Install ROS 2 and system tools
+→ Install ROS 2 and system tools
+→ Initialize rosdep
+
 Stage 2 — Builder
-Copy code and build with colcon
-(has compilers and build tools)
+→ Copy source code
+→ Install dependencies with rosdep
+→ Build package with colcon
+→ Has compilers and build tools (large)
+
 Stage 3 — Runtime
-Only copy final executables
-(small and lightweight)
+→ Copy only final executables from builder
+→ No build tools included
+→ Small and lightweight for deployment
+```
 
 Multi-stage builds keep the final Docker image small and fast to deploy.
 
